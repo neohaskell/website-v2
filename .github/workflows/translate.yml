@@ -25,7 +25,7 @@ on:
       - '!src/content/docs/adrs/*.md'
       - '!src/content/docs/docs/index.mdx'
       - 'src/data/landing.ts'
-      - 'src/data/landing-locales/**'
+      - '!src/data/landing-locales/**'
   workflow_dispatch:
 
 permissions:
