@@ -1,15 +1,18 @@
 # Continuous documentation translation for the Starlight docs site.
 #
 # NOTE: Auto-commits from this workflow trigger all push-to-main workflows (known consequence of monorepo)
-# NOTE: GROQ_API_KEY must be added to this repo's GitHub Actions secrets
-#       (Settings → Secrets → Actions → New repository secret: GROQ_API_KEY)
+# NOTE: Automatic translation runs when GROQ_API_KEY is configured in the
+#       repository's GitHub Actions secrets. Without it, this workflow exits
+#       successfully with a warning and the documentation workflow remains the
+#       source-of-truth for detecting stale translations.
 # NOTE: The checker owns the 49-page inventory plus the five TypeScript landing
 #       translations. The hand-maintained docs/index.mdx and each locale's
 #       index.mdx/docs/index.mdx are documentation landing pages outside the
 #       Markdown inventory. The tracked adrs/index.mdx is translated; generated
 #       adrs/*.md detail pages remain canonical English and are excluded.
 #       Landing data is maintained in src/data/landing-locales/ and is
-#       source-revision checked; the Starlight action translates documentation.
+#       source-revision checked by the documentation workflow; the Starlight
+#       action below translates Markdown/MDX documentation only.
 name: Translate Documentation
 
 on:
@@ -24,7 +27,6 @@ on:
       - '!src/content/docs/ru/**'
       - '!src/content/docs/adrs/*.md'
       - '!src/content/docs/docs/index.mdx'
-      - 'src/data/landing.ts'
       - '!src/data/landing-locales/**'
   workflow_dispatch:
 
@@ -39,11 +41,26 @@ jobs:
   translate:
     runs-on: ubuntu-latest
     steps:
+      - name: Check translation credentials
+        id: translation_credentials
+        shell: bash
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [[ -n "$GROQ_API_KEY" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::GROQ_API_KEY is not configured; skipping automatic translation."
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.translation_credentials.outputs.available == 'true'
         with:
           fetch-depth: 0
 
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: steps.translation_credentials.outputs.available == 'true'
         with:
           path: .genaiscript/cache/**
           key: continuous-translation-${{ github.run_id }}
@@ -51,6 +68,7 @@ jobs:
             continuous-translation-
 
       - uses: pelikhan/action-continuous-translation@923d1c9a88c47993a6d10c509c810f853c9205e6 # v0
+        if: steps.translation_credentials.outputs.available == 'true'
         with:
           openai_api_key: ${{ secrets.GROQ_API_KEY }}
           openai_api_base: https://api.groq.com/openai/v1
@@ -80,6 +98,7 @@ jobs:
             !src/content/docs/docs/index.mdx
 
       - name: Translate to Armenian (unsupported by GenAIScript)
+        if: steps.translation_credentials.outputs.available == 'true'
         working-directory: .
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -101,7 +120,8 @@ jobs:
 
             echo "Translating $file to Armenian..."
             content=$(cat "$file")
-            response=$(curl --fail --silent --show-error https://api.groq.com/openai/v1/chat/completions \
+            if ! response=$(curl --fail-with-body --silent --show-error --retry 3 --retry-delay 2 \
+              https://api.groq.com/openai/v1/chat/completions \
               -H "Authorization: Bearer $GROQ_API_KEY" \
               -H "Content-Type: application/json" \
               -d "$(jq -n --arg content "$content" '{
@@ -113,7 +133,12 @@ jobs:
                 temperature: 0.3,
                 max_tokens: 8192
               }')")
-            translated=$(echo "$response" | jq -r '.choices[0].message.content // empty')
+            then
+              echo "Translation request failed for $file" >&2
+              printf '%s\n' "$response" | jq -r '.error.message // .' >&2 || true
+              exit 1
+            fi
+            translated=$(printf '%s\n' "$response" | jq -r '.choices[0].message.content // empty')
             if [ -n "$translated" ]; then
               printf '%s\n' "$translated" > "$target_file"
               echo "Created: $target_file"
@@ -125,6 +150,7 @@ jobs:
           done < <(find "$docs_root" -type f \( -name '*.md' -o -name '*.mdx' \) | sort)
 
       - name: Reorganize translations to Starlight locale directories
+        if: steps.translation_credentials.outputs.available == 'true'
         working-directory: .
         run: |
           for lang in es ru hy fr ja; do
@@ -150,18 +176,22 @@ jobs:
           done
 
       - name: Test translation checker
+        if: steps.translation_credentials.outputs.available == 'true'
         working-directory: .
         run: node scripts/check-translations.mjs --self-test
 
       - name: Stamp English source revisions
+        if: steps.translation_credentials.outputs.available == 'true'
         working-directory: .
         run: node scripts/check-translations.mjs --stamp --all
 
       - name: Verify all locale inventories and source revisions
+        if: steps.translation_credentials.outputs.available == 'true'
         working-directory: .
         run: node scripts/check-translations.mjs --check
 
       - uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
+        if: steps.translation_credentials.outputs.available == 'true'
         with:
           file_pattern: 'src/content/docs/** src/data/landing-locales/** translations/**'
           commit_message: '[translation] auto-translate docs'
