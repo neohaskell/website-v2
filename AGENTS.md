@@ -175,19 +175,16 @@ control to receive focus before asserting Escape behavior. Preserve reduced
 motion and visible focus. For the Starlight mobile menu inspect the host's
 `aria-expanded` and sidebar visibility, not only the nested button attribute.
 
-Keep the requested Tailscale preview at
-**http://corthan.tail78a30.ts.net:4321/** (docs: `/docs/`). To serve a built site:
+To serve a built site locally:
 
 ```sh
 pnpm build
-pnpm exec astro preview --host 0.0.0.0 --port 4321 --allowed-hosts corthan.tail78a30.ts.net
+pnpm preview
 ```
 
-Use a persistent terminal for the server. Do not assume an old process still
-serves this checkout. Inspect a port conflict before stopping a process; Astro
-may otherwise silently choose 4322. Verify the hostname itself returns 200 for
-both `/` and `/docs/`; an IP-only check misses allowed-host failures. Do not use
-`pnpm dev -- --host ...` (the extra `--` previously broke argument forwarding).
+Use the local URL printed by Astro and check both `/` and `/docs/`. Do not
+assume an old process still serves this checkout. Inspect a port conflict
+before stopping a process; Astro may otherwise choose another port.
 
 ## Completion and migration handoff
 
