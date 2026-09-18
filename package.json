@@ -20,7 +20,7 @@
     "precheck": "pnpm check:source && pnpm generate:adrs",
     "check": "astro check",
     "astro": "astro",
-    "check:docs": "pnpm check:source && python3 scripts/adr-index-check && node scripts/check-docs.mjs --check",
+    "check:docs": "pnpm check:source && python3 scripts/adr-index-check && node scripts/generate-adrs.mjs --check && node scripts/check-docs.mjs --check",
     "check:translations": "node scripts/check-translations.mjs --check",
     "test:docs": "node scripts/check-docs.mjs --self-test && node --test scripts/generate-examples.test.mjs && node --test scripts/check-translations.test.mjs",
     "test:translations": "node scripts/check-translations.mjs --self-test && node --test scripts/check-translations.test.mjs",
