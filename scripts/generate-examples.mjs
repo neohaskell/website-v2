@@ -8,7 +8,8 @@ import { gzipSync } from 'node:zlib';
 const website = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Stored DEFLATE blocks keep checked-in downloads byte-identical across Node
-// releases. Compressed block choices changed between Node 24 releases.
+// releases. Compressed block choices changed between Node 24 releases. The
+// header bytes are normalized because Node also writes a platform byte there.
 const gzipOptions = { level: 0 };
 
 function filesUnder(directory, prefix = '') {
@@ -88,7 +89,10 @@ export function archive(entries) {
     chunks.push(header, data, Buffer.alloc((512 - data.length % 512) % 512));
   }
   chunks.push(Buffer.alloc(1024));
-  return gzipSync(Buffer.concat(chunks), gzipOptions);
+  const compressed = gzipSync(Buffer.concat(chunks), gzipOptions);
+  compressed[8] = 0; // XFL: no compressor hint
+  compressed[9] = 3; // OS: Unix, used as a platform-neutral archive marker
+  return compressed;
 }
 
 export function generateExamples(check = false) {
