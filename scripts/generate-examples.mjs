@@ -7,6 +7,10 @@ import { gzipSync } from 'node:zlib';
 
 const website = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
+// Stored DEFLATE blocks keep checked-in downloads byte-identical across Node
+// releases. Compressed block choices changed between Node 24 releases.
+const gzipOptions = { level: 0 };
+
 function filesUnder(directory, prefix = '') {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const name = prefix + entry.name;
@@ -84,7 +88,7 @@ export function archive(entries) {
     chunks.push(header, data, Buffer.alloc((512 - data.length % 512) % 512));
   }
   chunks.push(Buffer.alloc(1024));
-  return gzipSync(Buffer.concat(chunks), { level: 9 });
+  return gzipSync(Buffer.concat(chunks), gzipOptions);
 }
 
 export function generateExamples(check = false) {
