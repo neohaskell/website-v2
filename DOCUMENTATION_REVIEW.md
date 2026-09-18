@@ -214,7 +214,7 @@ A model relationship is not presented
 as proof that an operation ran. Capture provenance stays here, outside the lesson.
 
 Starlight Image Zoom 0.15.0 and the supported Unified Markdown renderer enlarge
-SVGs and PNGs in a dialog without changing pages. [ADR-0078](https://github.com/neohaskell/NeoHaskell/blob/main/docs/decisions/0078-documentation-image-zoom.md)
+SVGs and PNGs in a dialog without changing pages. The image-zoom integration is configured in `astro.config.mjs`; the website validates its rendered keyboard and accessibility behavior.
 records the dependency choice. Built-page checks require accessible zoom triggers
 on all registered illustrations. The recaptured AddItem image and its zoom trigger
 are present at the guide URL, but the native popup's complete open, Escape, and
