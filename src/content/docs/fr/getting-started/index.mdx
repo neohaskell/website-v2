@@ -1,0 +1,105 @@
+---
+title: "Créer votre projet"
+description: "Installez Neo, créez votre propre application et apprenez les commandes que vous continuerez à utiliser à mesure qu'elle grandira."
+sidebar:
+  order: 0
+---
+{/* translation-source-sha256: 2e02931deba7b1ad90bd9964e78e9f3d3cf82a27b719948a9d96ba3f2a624bf4 */}
+
+Votre premier jalon est un projet à vous. Vous allez le créer avec `neo`, l'outil en ligne de commande de NeoHaskell, puis le faire évoluer dans les chapitres suivants. Le même répertoire contiendra votre code, vos tests, votre configuration et votre modèle visuel.
+
+Nous appelons le projet d'exercice `mug-shop`. Il s'agit d'une petite application que vous allez construire. Vous pouvez choisir un autre nom et utiliser ce répertoire partout où le guide indique `mug-shop`.
+
+## Préparer vos outils
+
+Utilisez macOS ou Linux ; sous Windows, travaillez dans WSL2. Installez Git et [Nix pour votre système d'exploitation](https://nixos.org/download/). Nix fournit le compilateur et les dépendances de build sélectionnés par votre projet. Vous n'avez pas besoin d'installer GHC ou Cabal séparément.
+
+Vérifiez que les deux commandes sont disponibles dans un nouveau terminal :
+
+```sh
+git --version
+nix --version
+```
+
+Neo utilise les flakes Nix. Si votre installation de Nix ne les a pas activés, ajoutez cette ligne à `~/.config/nix/nix.conf`, en conservant les réglages existants :
+
+```ini
+experimental-features = nix-command flakes
+```
+
+## Installer Neo
+
+Téléchargez l'exécutable correspondant à votre ordinateur depuis les [releases de Neo](https://github.com/neohaskell/NeoHaskell/releases/latest).
+
+:::note[Exigence de version]
+
+Ces exemples nécessitent une release de Neo dont le framework de démarrage exporte les cinq helpers `derive…` via `Core`, notamment `deriveEntity`, et utilise le preset de compilateur Neo correspondant. Après `neo new`, conservez le pin `neo-version` généré ; si le starter ne fournit pas ces helpers, installez une release avec un pin de framework correspondant avant de modifier les fichiers source. Vous ne devriez pas avoir besoin d'ajouter des réglages de langage à vos fichiers source.
+
+:::
+
+| Ordinateur | Téléchargement |
+| --- | --- |
+| macOS, Apple Silicon | `neo-aarch64-apple-darwin` |
+| macOS, Intel | `neo-x86_64-apple-darwin` |
+| Linux ou WSL2, Intel/AMD 64 bits | `neo-x86_64-unknown-linux-gnu` |
+| Linux, ARM 64 bits | `neo-aarch64-unknown-linux-gnu` |
+
+Par exemple, sur un Mac Apple Silicon :
+
+```sh
+mkdir -p "$HOME/.local/bin"
+curl -fL https://github.com/neohaskell/NeoHaskell/releases/latest/download/neo-aarch64-apple-darwin -o "$HOME/.local/bin/neo"
+chmod +x "$HOME/.local/bin/neo"
+export PATH="$HOME/.local/bin:$PATH"
+neo --version
+```
+
+Pour une autre plateforme, remplacez le dernier nom de fichier de l'URL de téléchargement par celui du tableau. Conservez `neo` comme nom de fichier de destination. Ajoutez la ligne `export PATH` au fichier de démarrage de votre shell (`~/.zshrc` pour zsh ou `~/.bashrc` pour bash) afin que Neo soit également disponible dans les futurs terminaux. La release inclut `SHA256SUMS` si vous souhaitez vérifier la somme de contrôle du fichier téléchargé.
+
+La commande affiche la version de Neo installée. `command -v neo` indique quel exécutable votre shell a trouvé. Lors d'une mise à niveau, vérifiez les deux afin qu'une ancienne installation ne passe pas avant la nouvelle dans votre `PATH`.
+
+## Créer l'application
+
+Depuis le répertoire où vous conservez vos projets :
+
+```sh
+neo new mug-shop
+cd mug-shop
+neo build
+```
+
+Acceptez les détails du projet ou choisissez les vôtres lorsque Neo vous le demande. `neo new` crée une application avec un petit starter, une suite de tests et des dépendances épinglées. `neo build` la compile. Le premier build peut prendre plus de temps pendant le téléchargement ou la construction des dépendances ; les suivants réutilisent ce travail. Nix peut vous demander si vous faites confiance aux caches binaires déclarés par le projet.
+
+Le starter inclut un compteur comme code d'exemple. Dans le chapitre suivant, vous remplacerez le câblage de son application par votre première fonctionnalité de panier, dans ce même projet. Aucun exercice sur le compteur n'est à terminer auparavant.
+
+## Repérer les parties que vous allez modifier
+
+| Emplacement | Ce que vous y faites |
+| --- | --- |
+| `src/App.hs` | Connecter vos services, requêtes, magasin d'événements et transport web. |
+| `src/Shop/` | Ajouter les fonctionnalités de l'application que vous écrirez dans ce guide. |
+| `tests/` | Décrire le comportement et le vérifier de manière répétée. |
+| `neo.json` | Définir les détails du projet et déclarer les dépendances supplémentaires. |
+| `flake.lock` et `neo-version` dans `neo.json` | Conserver des versions de dépendances résolues et reproductibles. |
+| `event-model.json` | Enregistrer le modèle visuel lorsque vous commencerez à utiliser l'IDE. |
+
+`src/Shop/` et `event-model.json` apparaissent dans les prochaines étapes ; ils n'ont pas besoin d'exister dans le starter vierge. Neo génère les fichiers de build de bas niveau à partir de votre configuration et de vos modules source. Modifiez le projet via `neo.json`, puis relancez `neo build` au lieu de maintenir manuellement les fichiers de build générés.
+
+Conservez les pins de dépendances fournis par `neo new`. Ils identifient la révision du framework compatible avec le starter. Une mise à niveau est une modification délibérée du projet, avec ses propres vérifications de build et de comportement.
+
+## Apprendre la boucle quotidienne
+
+Vous continuerez à utiliser ces commandes depuis la racine du projet :
+
+| Commande | Ce qu'elle fournit |
+| --- | --- |
+| `neo build` | Une vérification du compilateur sur l'application et son câblage. |
+| `neo run` | Une application en cours d'exécution pour essayer des demandes. |
+| `neo test` | Les vérifications de comportement répétables de votre projet. |
+| `neo ide` | Un espace de travail visuel pour explorer le modèle de l'application. |
+
+Un build réussi constitue pour l'instant votre vérification de configuration. Dans le chapitre suivant, vous créerez un panier, lui enverrez une demande et lirez le résultat. Cela relie la compilation à un comportement que vous pouvez réellement inspecter.
+
+Si une commande échoue, conservez l'erreur complète et utilisez le [dépannage](/fr/reference/troubleshooting/). Si vous avez déjà une application, appliquez-y la nouvelle fonctionnalité au lieu d'exécuter `neo new` à nouveau.
+
+Ensuite : [construire votre premier panier](/fr/build/first-cart/).

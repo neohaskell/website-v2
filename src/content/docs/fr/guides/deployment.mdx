@@ -1,0 +1,66 @@
+---
+title: "Déploiement"
+description: "Configuration des sondes et vérifications de déploiement progressif pour les services NeoHaskell dotés de modèles de lecture basés sur les événements."
+sidebar:
+  order: 1
+---
+{/* translation-source-sha256: 9524c5755ab9f2b1d8e66dd314787d9e90090643e23e093de02c092530086a77 */}
+
+Une nouvelle révision de l'application ne doit recevoir du trafic que lorsqu'elle peut répondre aux requêtes requises. Ce guide s'applique à l'application `mug-shop` que vous construisez dans le parcours principal. Exécutez ses vérifications depuis le répertoire contenant `neo.json` ; les données durables nécessitent d'abord l'[étape de persistance](/fr/operate/persistence/). Ce guide se concentre sur le contrat des sondes et du déploiement progressif. Pour la préparation exécutable, la configuration et les vérifications de bout en bout, suivez [Déployer une application](/fr/operate/deployment/).
+
+## Commencer par une sonde de démarrage
+
+Un processus NeoHaskell possède deux signaux de démarrage distincts :
+
+- `GET /health` est la **vivacité** : le processus HTTP a ouvert son port.
+- `GET /ready` est la **disponibilité** : chaque projection de requête enregistrée a rattrapé son retard.
+
+Configurez d'abord une sonde de démarrage. Sans elle, un orchestrateur peut appliquer le budget de vivacité de régime normal alors que le processus se connecte encore à sa base de données et initialise les transports.
+
+```yaml
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 12
+  timeoutSeconds: 2
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 2
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 3
+  timeoutSeconds: 2
+```
+
+Le budget de démarrage repose sur une arithmétique explicite : `periodSeconds × failureThreshold = 5 × 12 = 60 seconds`. Dimensionnez ce budget pour une initialisation bornée du processus et de la base de données, pas pour la relecture du journal d'événements. La relecture historique des requêtes s'exécute après l'enregistrement de l'abonnement en direct et ne doit pas retarder l'ouverture HTTP ; `/ready` reste à `503` jusqu'à ce que la relecture et les événements en direct qui se chevauchent soient entièrement drainés.
+
+## Contrat de déploiement progressif
+
+1. Démarrez la nouvelle révision sans lui acheminer de trafic.
+2. Attendez que `/health` prouve que le processus accepte les connexions.
+3. Gardez-la hors service tant que `/ready` vaut `503`.
+4. Acheminez le trafic seulement après que `/ready` est passé à `200`.
+5. Exécutez les smoke tests post-déploiement sur l'**identité de la nouvelle révision**, pas seulement sur l'ingress partagé. Un ingress partagé peut encore acheminer vers l'ancienne révision et afficher un résultat vert alors que le déploiement a échoué.
+
+Déclenchez des alertes séparées pour un échec de la sonde de démarrage, un `/ready` à 503 prolongé et un déploiement dont la révision active n'a pas changé.
+
+## Connexions Postgres
+
+NeoHaskell possède un pool client borné pour chaque sous-système Postgres configuré. L'EventStore réutilise son pool pour les lectures et les écritures ; il ne construit pas un nouveau pool pour chaque événement relu.
+
+`LISTEN/NOTIFY` nécessite une connexion Postgres directe qui préserve la session. Ne faites pas passer les connexions d'écoute par un endpoint PgBouncer en mode transaction. La mise à l'échelle à zéro de Neon et la prise en charge d'endpoints séparés, mutualisés et directs sont suivies dans [l'issue #857](https://github.com/neohaskell/NeoHaskell/issues/857).
+
+## Limitation à l'arrêt
+
+L'annulation par SIGTERM et la vidange des checkpoints pendant une reconstruction active sont toujours suivies dans [l'issue #662](https://github.com/neohaskell/NeoHaskell/issues/662). N'étendez pas indéfiniment le délai de grâce de terminaison pour attendre la relecture ; utilisez le contrat des sondes ci-dessus et suivez cette issue pour connaître le comportement d'arrêt finalisé.

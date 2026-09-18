@@ -1,0 +1,66 @@
+---
+title: "デプロイ"
+description: イベントソーシングされたリードモデルを持つ NeoHaskell サービスの設定とロールアウトを確認するプローブです。
+sidebar:
+  order: 1
+---
+{/* translation-source-sha256: 9524c5755ab9f2b1d8e66dd314787d9e90090643e23e093de02c092530086a77 */}
+
+新しいアプリケーションのリビジョンは、必要なクエリに答えられる場合だけトラフィックを受けるべきです。このガイドは、メインの道のりで構築する `mug-shop` アプリケーションに適用します。`neo.json` があるディレクトリから確認を実行します。永続データには、先に[永続化のステップ](/ja/operate/persistence/)が必要です。このガイドはプローブとロールアウトの契約に焦点を当てます。実行可能な準備、設定、エンドツーエンドの確認は、[アプリケーションをデプロイする](/ja/operate/deployment/)を参照してください。
+
+## 起動プローブから始める
+
+NeoHaskell のプロセスには、異なる起動シグナルが 2 つあります。
+
+- `GET /health` は**ライブネス**です。HTTP プロセスがポートをバインドしたことを示します。
+- `GET /ready` は**レディネス**です。登録されたすべてのクエリプロジェクションが追いついたことを示します。
+
+最初に起動プローブを設定します。これがないと、オーケストレーターは、プロセスがまだデータベースへ接続しトランスポートを初期化している間にも、定常状態のライブネス予算を適用できます。
+
+```yaml
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 12
+  timeoutSeconds: 2
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 2
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 3
+  timeoutSeconds: 2
+```
+
+起動予算は明示的な算術です。`periodSeconds × failureThreshold = 5 × 12 = 60 seconds`。この予算は、上限付きのプロセス・データベース初期化に合わせます。イベントログのリプレイ用ではありません。履歴クエリのリプレイはライブ購読の登録後に実行され、HTTP バインドを遅らせてはいけません。リプレイと重なったライブイベントが完全に処理されるまで、`/ready` は `503` のままです。
+
+## ロールアウトの契約
+
+1. 新しいリビジョンを、トラフィックへルーティングせずに起動します。
+2. `/health` がプロセスの接続受付を証明するまで待ちます。
+3. `/ready` が `503` の間は、サービスの対象外にします。
+4. `/ready` が `200` になってからトラフィックをルーティングします。
+5. デプロイ後のスモークテストは、共有 ingress だけでなく**新しいリビジョンの識別情報**に対して実行します。共有 ingress が古いリビジョンへルーティングしていると、ロールアウトが失敗してもグリーンを報告することがあります。
+
+起動プローブの失敗、長時間続く `/ready` の 503、アクティブなリビジョンが変わらないロールアウトには、それぞれ別のアラートを設定します。
+
+## Postgres 接続
+
+NeoHaskell は、設定された Postgres サブシステムごとに、上限付きのクライアントプールを 1 つ所有します。EventStore は読み書きに同じプールを再利用し、リプレイするイベントごとに新しいプールを作りません。
+
+`LISTEN/NOTIFY` には、直接でセッションを維持する Postgres 接続が必要です。トランザクションモードの PgBouncer エンドポイントを通してリスナー接続をルーティングしないでください。Neon の scale-to-zero と、プール済み・直接エンドポイントの分割対応は[issue #857](https://github.com/neohaskell/NeoHaskell/issues/857)で追跡しています。
+
+## シャットダウンの制限
+
+アクティブな再構築中の SIGTERM キャンセルとチェックポイントのフラッシュは、[issue #662](https://github.com/neohaskell/NeoHaskell/issues/662)で追跡中です。リプレイを待つために終了猶予を無期限に延ばさないでください。上のプローブ契約を使い、完成したシャットダウン動作についてはその issue を確認します。

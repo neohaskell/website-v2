@@ -1,0 +1,68 @@
+---
+title: "Construye software que puedas explicar"
+description: "Entiende el enfoque, comienza un proyecto o encuentra una respuesta concreta."
+---
+
+<div class="docs-hero">
+<p class="docs-hero__lede">Entiende el trabajo antes de cambiar el código. Constrúyelo con un agente. Comprueba que el resultado siga significando lo que pretendías.</p>
+<div class="docs-hero__actions">
+<a class="docs-button docs-button--primary" href="/es/start/">Encuentra tu camino</a>
+<a class="docs-button" href="/es/getting-started/">Crea un proyecto</a>
+</div>
+</div>
+
+## Elige tu camino
+
+<nav class="docs-paths" aria-label="Rutas de la documentación">
+<a href="/es/start/"><span>Evaluar</span><strong>Entiende el enfoque</strong><small>Aprende por qué las decisiones explícitas, el historial conservado y los slices pequeños importan antes de instalar nada.</small></a>
+<a href="/es/getting-started/"><span>Construir</span><strong>Crea tu primer proyecto</strong><small>Instala Neo, crea una aplicación starter y construye un carrito funcional con tu agente de programación.</small></a>
+<a href="/es/start/a-shop-on-paper/"><span>Modelar</span><strong>Pruébalo sin instalar</strong><small>Describe un comportamiento útil sobre el papel antes de que una toolchain o una implementación se interpongan.</small></a>
+<a href="/es/reference/capabilities/"><span>Consultar</span><strong>Encuentra una respuesta concreta</strong><small>Ve directamente a las capacidades, los comandos de la CLI, el glosario o la solución de problemas.</small></a>
+</nav>
+
+## Entiende el enfoque
+
+Una primera versión solo es el comienzo. Las personas piden comportamientos nuevos, las reglas cambian y una aplicación pasa a ser responsable de trabajo que ya ocurrió. Necesitas explicar ese trabajo además de añadir la próxima funcionalidad.
+
+La IA facilita producir una implementación. También hace importante precisar el significado de un cambio. «Actualiza esta dirección» podría significar una preferencia para el próximo pedido o un cambio en un pedido que ya está en curso. Ambas cosas pueden ser fáciles de programar. Elegir el significado correcto exige comprender el proceso.
+
+NeoHaskell conecta esa comprensión con un modelo compartido. El modelo describe qué pueden solicitar las personas, qué reglas se aplican, qué hechos registra la aplicación y qué necesitan ver las personas. Esos conceptos tienen lugares correspondientes en la implementación, de modo que tú y tu agente podéis hablar del mismo comportamiento con distintos niveles de detalle.
+
+![Un ciclo de aprendizaje conecta tu intención, un modelo compartido, la implementación con tu agente y la evidencia que inspeccionas antes de aceptar un cambio.](/diagrams/meaning-to-software.svg)
+
+*Empieza con una regla que puedas explicar. Síguela hasta el modelo y la implementación; después compara el resultado observable con lo que pretendías.*
+
+## Por qué el pasado importa para el próximo cambio
+
+Cuando una aplicación muestra un valor, a menudo muestra el resultado de acciones anteriores. Un saldo procede de movimientos de dinero. El estado de una reserva procede de solicitudes, confirmaciones y cancelaciones. Conservar solo el resultado actual puede dejarte sin capacidad para explicar cómo se obtuvo.
+
+El framework de aplicaciones de NeoHaskell registra como eventos los cambios aceptados. Usa ese historial para reconstruir el estado y preparar vistas. Una corrección puede convertirse en un hecho nuevo y explícito, y un informe nuevo puede usar información ya conservada. Tú eliges qué hechos y contexto necesita la aplicación; el framework no puede recuperar un motivo que nunca se registró.
+
+## Sigue un proyecto funcional
+
+Los ejemplos desarrollados construyen gradualmente una pequeña aplicación de comercio electrónico, empezando por un producto y un carrito. Esto te proporciona un contexto conocido en el que probar cada concepto. Puedes seguir el proyecto de práctica o aplicar el mismo método a tu propia aplicación.
+
+La ruta principal es:
+
+1. [Describe el comportamiento de la aplicación](/es/start/event-modeling/) y [acuerda cómo trabajar](/es/start/trusting-your-agent/).
+2. [Configura un proyecto](/es/getting-started/) y [explóralo visualmente](/es/getting-started/visual-ide/).
+3. [Construye aplicaciones](/es/build/) mediante comandos, estado, consultas y tests.
+4. [Conecta sistemas](/es/connect/) y añade funcionalidades de IA cuidadosamente acotadas.
+5. [Opera y evoluciona](/es/operate/) con persistencia, comprobaciones de despliegue y recuperación.
+
+Cada capítulo indica qué entenderás, qué construirás y qué evidencia comprobar. Un ejemplo desarrollado ofrece código y comprobaciones para ejecutar. Un fragmento parcial enseña un mecanismo e identifica el cableado que lo rodea. Un ejercicio de diseño te pide elegir e implementar un comportamiento; el razonamiento sugerido te ayuda a evaluar la elección.
+
+## Encuentra una respuesta concreta
+
+| Cuando quieras… | Empieza aquí |
+| --- | --- |
+| Entender las ideas centrales del proyecto | [Por qué NeoHaskell](/es/start/why-neohaskell/) |
+| Ver cómo los hechos explican el estado actual | [Historia y cambio](/es/start/history-and-change/) |
+| Aprender el flujo de modelado visual | [Modelado de eventos](/es/start/event-modeling/) |
+| Construir una primera solicitud funcional | [Tu primer carrito](/es/build/first-cart/) |
+| Consultar una capacidad | [Referencia de capacidades](/es/reference/capabilities/) |
+| Comprobar un comando | [Referencia de la CLI](/es/reference/cli/) |
+| Descifrar un término | [Glosario](/es/reference/glossary/) |
+| Recuperarte de un problema | [Solución de problemas](/es/reference/troubleshooting/) |
+
+Creas el proyecto de práctica una sola vez con `neo new` y luego evolucionas su carrito, sus tests, su configuración y su modelo visual durante todo el recorrido. Los ejercicios más avanzados dejan en tus manos las decisiones de negocio, pero muestran cómo implementar y verificar los mecanismos que hay detrás. Lee [la guía completa del recorrido](/es/start/) cuando quieras seguir la secuencia, o [crea tu proyecto](/es/getting-started/) ahora.

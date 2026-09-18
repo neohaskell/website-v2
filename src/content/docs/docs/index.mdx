@@ -1,0 +1,68 @@
+---
+title: "Build software you can explain"
+description: "Understand the approach, start a project, or find a specific answer."
+---
+
+<div class="docs-hero">
+<p class="docs-hero__lede">Understand the work before you change the code. Build it with an agent. Check that the result still means what you intended.</p>
+<div class="docs-hero__actions">
+<a class="docs-button docs-button--primary" href="/start/">Find your path</a>
+<a class="docs-button" href="/getting-started/">Create a project</a>
+</div>
+</div>
+
+## Choose your path
+
+<nav class="docs-paths" aria-label="Documentation paths">
+<a href="/start/"><span>Evaluate</span><strong>Understand the approach</strong><small>Learn why explicit decisions, retained history, and small slices matter before you install anything.</small></a>
+<a href="/getting-started/"><span>Build</span><strong>Create your first project</strong><small>Install Neo, create a starter application, and build a working cart with your coding agent.</small></a>
+<a href="/start/a-shop-on-paper/"><span>Model</span><strong>Try it without installing</strong><small>Describe a useful behaviour on paper before a toolchain or implementation gets in the way.</small></a>
+<a href="/reference/capabilities/"><span>Look up</span><strong>Find a specific answer</strong><small>Go directly to capabilities, CLI commands, the glossary, or troubleshooting.</small></a>
+</nav>
+
+## Understand the approach
+
+A first version is only the beginning. People ask for new behaviour, rules change, and an application becomes responsible for work that has already happened. You need to explain that work as well as add the next feature.
+
+AI makes it easier to produce an implementation. It also makes it important to be precise about the meaning of a change. “Update this address” could mean a preference for the next order or a change to an order already in progress. Both can be easy to code. Choosing the right meaning requires understanding the process.
+
+NeoHaskell connects that understanding to a shared model. The model describes what people can request, which rules apply, which facts the application records, and what people need to see. Those concepts have corresponding places in the implementation, so you and your agent can discuss the same behaviour at different levels of detail.
+
+![A learning cycle connects your intent, a shared model, implementation with your agent, and evidence you inspect before accepting a change.](/diagrams/meaning-to-software.svg)
+
+*Start with a rule you can explain. Follow it into the model and implementation, then compare the observable result with what you intended.*
+
+## Why the past matters to the next change
+
+When an application shows a value, it is often showing the result of earlier actions. A balance comes from money movements. A reservation status comes from requests, confirmations, and cancellations. Keeping only the current result can leave you unable to explain how it came about.
+
+NeoHaskell’s application framework records accepted changes as events. It uses that history to reconstruct state and prepare views. A correction can become an explicit new fact, and a new report can use information already retained. You choose which facts and context the application needs; the framework cannot recover a reason that was never recorded.
+
+## Follow a working project
+
+The worked examples gradually build a small ecommerce application, starting with one product and a cart. This gives you a familiar setting in which to try each concept. You can follow the practice project or apply the same method to your own application.
+
+The main route is:
+
+1. [Describe application behaviour](/start/event-modeling/) and [agree how to work](/start/trusting-your-agent/).
+2. [Set up a project](/getting-started/) and [explore it visually](/getting-started/visual-ide/).
+3. [Build applications](/build/) through commands, state, queries, and tests.
+4. [Connect systems](/connect/) and add carefully bounded AI features.
+5. [Operate and evolve](/operate/) with persistence, deployment checks, and recovery.
+
+Each chapter names what you will understand, what you will build, and what evidence to check. A worked example gives code and checks to run. A partial snippet teaches one mechanism and identifies the surrounding wiring. A design exercise asks you to choose and implement behaviour; suggested reasoning helps you assess the choice.
+
+## Find a specific answer
+
+| When you want to… | Start here |
+| --- | --- |
+| Understand the project’s core ideas | [Why NeoHaskell](/start/why-neohaskell/) |
+| See how facts explain current state | [History and change](/start/history-and-change/) |
+| Learn the visual modeling workflow | [Event modeling](/start/event-modeling/) |
+| Build a first working request | [Your first cart](/build/first-cart/) |
+| Look up a capability | [Capability reference](/reference/capabilities/) |
+| Check a command | [CLI reference](/reference/cli/) |
+| Decode a term | [Glossary](/reference/glossary/) |
+| Recover from a problem | [Troubleshooting](/reference/troubleshooting/) |
+
+You create the practice project once with `neo new`, then evolve its cart, tests, configuration, and visual model throughout the journey. More advanced exercises leave business choices to you while showing how to implement and verify the mechanisms behind them. Read [the full path guide](/start/) when you want the sequence, or [create your project](/getting-started/) now.

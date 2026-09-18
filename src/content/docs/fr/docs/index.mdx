@@ -1,0 +1,68 @@
+---
+title: "Construire un logiciel que vous pouvez expliquer"
+description: "Comprenez l'approche, démarrez un projet ou trouvez une réponse précise."
+---
+
+<div class="docs-hero">
+<p class="docs-hero__lede">Comprenez le travail avant de modifier le code. Construisez-le avec un agent. Vérifiez que le résultat signifie toujours ce que vous aviez l'intention de lui faire signifier.</p>
+<div class="docs-hero__actions">
+<a class="docs-button docs-button--primary" href="/fr/start/">Trouver votre parcours</a>
+<a class="docs-button" href="/fr/getting-started/">Créer un projet</a>
+</div>
+</div>
+
+## Choisissez votre parcours
+
+<nav class="docs-paths" aria-label="Parcours de documentation">
+<a href="/fr/start/"><span>Évaluer</span><strong>Comprendre l'approche</strong><small>Découvrez pourquoi les décisions explicites, l'historique conservé et les petites tranches comptent avant toute installation.</small></a>
+<a href="/fr/getting-started/"><span>Construire</span><strong>Créer votre premier projet</strong><small>Installez Neo, créez une application de démarrage et construisez un panier fonctionnel avec votre agent de codage.</small></a>
+<a href="/fr/start/a-shop-on-paper/"><span>Modéliser</span><strong>Essayer sans installer</strong><small>Décrivez un comportement utile sur papier avant qu'une chaîne d'outils ou une implémentation ne vous détourne du sujet.</small></a>
+<a href="/fr/reference/capabilities/"><span>Consulter</span><strong>Trouver une réponse précise</strong><small>Accédez directement aux capacités, aux commandes de l'interface CLI, au glossaire ou au dépannage.</small></a>
+</nav>
+
+## Comprendre l'approche
+
+Une première version n'est que le début. Les utilisateurs demandent de nouveaux comportements, les règles changent et une application devient responsable d'un travail déjà accompli. Vous devez pouvoir expliquer ce travail autant qu'ajouter la prochaine fonctionnalité.
+
+L'IA facilite la production d'une implémentation. Elle rend aussi indispensable la précision sur le sens d'une modification. « Mettre à jour cette adresse » peut signifier modifier une préférence pour la prochaine commande ou modifier une commande déjà en cours. Les deux interprétations sont faciles à coder. Choisir la bonne exige de comprendre le processus.
+
+NeoHaskell relie cette compréhension à un modèle partagé. Le modèle décrit ce que les personnes peuvent demander, les règles qui s'appliquent, les faits que l'application enregistre et ce que les personnes doivent voir. Ces concepts ont des emplacements correspondants dans l'implémentation : vous et votre agent pouvez donc discuter du même comportement avec des niveaux de détail différents.
+
+![Un cycle d'apprentissage relie votre intention, un modèle partagé, l'implémentation avec votre agent et les éléments de preuve que vous examinez avant d'accepter une modification.](/diagrams/meaning-to-software.svg)
+
+*Commencez par une règle que vous pouvez expliquer. Suivez-la dans le modèle et l'implémentation, puis comparez le résultat observable avec votre intention.*
+
+## Pourquoi le passé compte pour la prochaine modification
+
+Lorsqu'une application affiche une valeur, elle montre souvent le résultat d'actions antérieures. Un solde provient de mouvements d'argent. L'état d'une réservation provient de demandes, de confirmations et d'annulations. Ne conserver que le résultat actuel peut vous empêcher d'expliquer comment il a été obtenu.
+
+Le framework applicatif de NeoHaskell enregistre les modifications acceptées sous forme d'événements. Il utilise cet historique pour reconstruire l'état et préparer les vues. Une correction peut devenir un nouveau fait explicite, et un nouveau rapport peut utiliser des informations déjà conservées. Vous choisissez les faits et le contexte dont l'application a besoin ; le framework ne peut pas retrouver une raison qui n'a jamais été enregistrée.
+
+## Suivre un projet fonctionnel
+
+Les exemples suivis construisent progressivement une petite application de commerce en ligne, en commençant par un produit et un panier. Vous disposez ainsi d'un contexte familier pour essayer chaque concept. Vous pouvez suivre le projet d'exercice ou appliquer la même méthode à votre propre application.
+
+Le parcours principal est le suivant :
+
+1. [Décrire le comportement de l'application](/fr/start/event-modeling/) et [convenir d'une méthode de travail](/fr/start/trusting-your-agent/).
+2. [Configurer un projet](/fr/getting-started/) et [l'explorer visuellement](/fr/getting-started/visual-ide/).
+3. [Construire des applications](/fr/build/) avec des commandes, un état, des requêtes et des tests.
+4. [Connecter des systèmes](/fr/connect/) et ajouter des fonctionnalités d'IA soigneusement délimitées.
+5. [Exploiter et faire évoluer](/fr/operate/) l'application avec une persistance, des vérifications de déploiement et une récupération après incident.
+
+Chaque chapitre précise ce que vous comprendrez, ce que vous construirez et quelles preuves vérifier. Un exemple suivi fournit du code et des vérifications à exécuter. Un extrait partiel enseigne un mécanisme et indique le câblage environnant. Un exercice de conception vous demande de choisir et d'implémenter un comportement ; un raisonnement suggéré vous aide à évaluer ce choix.
+
+## Trouver une réponse précise
+
+| Si vous voulez… | Commencez ici |
+| --- | --- |
+| Comprendre les idées centrales du projet | [Pourquoi NeoHaskell](/fr/start/why-neohaskell/) |
+| Voir comment les faits expliquent l'état actuel | [Historique et modifications](/fr/start/history-and-change/) |
+| Apprendre le workflow de modélisation visuelle | [Event Modeling](/fr/start/event-modeling/) |
+| Construire une première requête fonctionnelle | [Votre premier panier](/fr/build/first-cart/) |
+| Consulter une capacité | [Référence des capacités](/fr/reference/capabilities/) |
+| Vérifier une commande | [Référence CLI](/fr/reference/cli/) |
+| Décoder un terme | [Glossaire](/fr/reference/glossary/) |
+| Récupérer après un problème | [Dépannage](/fr/reference/troubleshooting/) |
+
+Vous créez une seule fois le projet d'exercice avec `neo new`, puis vous faites évoluer son panier, ses tests, sa configuration et son modèle visuel tout au long du parcours. Les exercices avancés vous laissent les choix métier tout en montrant comment implémenter et vérifier les mécanismes sous-jacents. Lisez [le guide complet du parcours](/fr/start/) lorsque vous voulez suivre la séquence, ou [créez votre projet](/fr/getting-started/) dès maintenant.

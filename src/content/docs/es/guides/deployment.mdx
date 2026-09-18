@@ -1,0 +1,82 @@
+---
+title: "Despliegue"
+description: "Configuración de sondas y comprobaciones de despliegue gradual para servicios NeoHaskell con modelos de lectura basados en event sourcing."
+sidebar:
+  order: 1
+---
+{/* translation-source-sha256: 9524c5755ab9f2b1d8e66dd314787d9e90090643e23e093de02c092530086a77 */}
+
+Una nueva revisión de la aplicación solo debe recibir tráfico cuando pueda responder a las consultas requeridas. Esta guía se aplica a la aplicación `mug-shop` que construyes durante el recorrido principal. Ejecuta sus comprobaciones desde el directorio que contiene `neo.json`; los datos duraderos requieren primero el [paso de persistencia](/es/operate/persistence/). Esta guía se centra en el contrato de sondas y despliegue gradual. Para la preparación ejecutable, la configuración y las comprobaciones de extremo a extremo, sigue [Desplegar una aplicación](/es/operate/deployment/).
+
+## Empieza con una sonda de inicio
+
+Un proceso NeoHaskell tiene dos señales de inicio distintas:
+
+- `GET /health` es **liveness**: el proceso HTTP ha enlazado su puerto.
+- `GET /ready` es **readiness**: todas las proyecciones de consulta registradas están al día.
+
+Configura primero una sonda de inicio. Sin ella, un orquestador puede aplicar el
+presupuesto de liveness del estado estable mientras el proceso todavía se conecta
+a su base de datos e inicializa los transportes.
+
+```yaml
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 12
+  timeoutSeconds: 2
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 2
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 3
+  timeoutSeconds: 2
+```
+
+El presupuesto de inicio es una operación aritmética explícita:
+`periodSeconds × failureThreshold = 5 × 12 = 60 seconds`. Ajusta ese presupuesto
+a la inicialización acotada del proceso y la base de datos, no a la reproducción
+del registro de eventos. La reproducción histórica de consultas ocurre después
+de registrar la suscripción en vivo y no debe retrasar el enlace HTTP; `/ready`
+permanece en `503` hasta que la reproducción y los eventos vivos superpuestos se
+hayan drenado por completo.
+
+## Contrato de despliegue gradual
+
+1. Inicia la nueva revisión sin dirigirle tráfico.
+2. Espera a que `/health` demuestre que el proceso acepta conexiones.
+3. Mantenla fuera de servicio mientras `/ready` sea `503`.
+4. Dirige tráfico solo después de que `/ready` pase a `200`.
+5. Ejecuta smoke tests posteriores al despliegue contra la **identidad de la nueva revisión**, no solo contra el ingress compartido. Un ingress compartido todavía puede dirigir a la revisión antigua y mostrarse en verde aunque el despliegue haya fallado.
+
+Emite alertas por separado ante un fallo de la sonda de inicio, un `503`
+prolongado de `/ready` y un despliegue cuya revisión activa no haya cambiado.
+
+## Conexiones de Postgres
+
+NeoHaskell posee un pool de clientes acotado por cada subsistema de Postgres
+configurado. EventStore reutiliza su pool para lecturas y escrituras; no crea un
+pool nuevo para cada evento reproducido.
+
+`LISTEN/NOTIFY` requiere una conexión de Postgres directa que conserve la sesión.
+No dirijas las conexiones del listener a través de un endpoint de PgBouncer en
+modo transacción. El escalado a cero de Neon y la compatibilidad con endpoints
+separados (agrupado/directo) se siguen en la
+[incidencia #857](https://github.com/neohaskell/NeoHaskell/issues/857).
+
+## Limitación del apagado
+
+La cancelación mediante SIGTERM y el vaciado de puntos de control durante una
+reconstrucción activa se siguen en la [incidencia #662](https://github.com/neohaskell/NeoHaskell/issues/662). No amplíes indefinidamente el tiempo de gracia de terminación para esperar a la reproducción; usa el contrato de sondas anterior y sigue esa incidencia para conocer el comportamiento de apagado cuando esté completado.

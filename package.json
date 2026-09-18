@@ -1,0 +1,41 @@
+{
+  "name": "neohaskell-website",
+  "type": "module",
+  "version": "0.0.1",
+  "packageManager": "pnpm@11.5.3",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "prepare:source": "node scripts/prepare-main-source.mjs --refresh",
+    "check:source": "node scripts/prepare-main-source.mjs --check",
+    "verify": "node scripts/verify.mjs",
+    "generate:adrs": "node scripts/generate-adrs.mjs",
+    "predev": "pnpm check:source && pnpm generate:adrs",
+    "dev": "astro dev",
+    "start": "astro dev",
+    "prebuild": "pnpm check:source && pnpm generate:adrs && node scripts/generate-examples.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "precheck": "pnpm check:source && pnpm generate:adrs",
+    "check": "astro check",
+    "astro": "astro",
+    "check:docs": "pnpm check:source && python3 scripts/adr-index-check && node scripts/check-docs.mjs --check",
+    "check:translations": "node scripts/check-translations.mjs --check",
+    "test:docs": "node scripts/check-docs.mjs --self-test && node --test scripts/generate-examples.test.mjs && node --test scripts/check-translations.test.mjs",
+    "test:translations": "node scripts/check-translations.mjs --self-test && node --test scripts/check-translations.test.mjs",
+    "check:links": "node scripts/check-docs.mjs --built",
+    "generate:examples": "node scripts/generate-examples.mjs"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "7.2.1",
+    "@astrojs/starlight": "^0.41.3",
+    "astro": "^7.0.2",
+    "sharp": "^0.35.0",
+    "starlight-image-zoom": "0.15.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^5.0.0"
+  }
+}

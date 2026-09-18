@@ -1,0 +1,263 @@
+---
+import '../styles/landing.css';
+import {
+	landingContent,
+	landingRouteLocales,
+	type LandingContent,
+	type LandingLocale,
+} from '../data/landing';
+
+interface Props {
+	content: LandingContent;
+	locale: LandingLocale;
+}
+
+const { content, locale } = Astro.props;
+const { ui } = content;
+const proof = { ...landingContent.ui.proof, ...ui.proof };
+const ideImage = '/screenshots/neo-ide-overview.png';
+const githubUrl = 'https://github.com/neohaskell/NeoHaskell';
+const discordUrl = 'https://discord.com/invite/wDj3UYzec';
+const canonicalPath = locale === 'en' ? '/' : `/${locale}/`;
+const canonicalUrl = `https://neohaskell.org${canonicalPath}`;
+const htmlLanguage = locale === 'en' ? ui.pageLanguage : locale;
+const staticAssetPattern = /\.(?:avif|gif|jpe?g|png|svg|webp|ico|css|js|woff2?)(?:[?#].*)?$/i;
+const localePrefix = `/${locale}`;
+
+const localizeHref = (href: string) => {
+	if (
+		locale === 'en' ||
+		!href.startsWith('/') ||
+		href.startsWith('//') ||
+		href.startsWith('#') ||
+		staticAssetPattern.test(href) ||
+		href === localePrefix ||
+		href.startsWith(`${localePrefix}/`)
+	) {
+		return href;
+	}
+
+	return href === '/' ? canonicalPath : `/${locale}${href}`;
+};
+
+const languageHref = (languageLocale: LandingLocale) =>
+	languageLocale === 'en' ? '/' : `/${languageLocale}/`;
+---
+
+<!doctype html>
+<html lang={htmlLanguage}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="theme-color" content="#fefce8" />
+		<meta name="description" content={content.intro} />
+		<link rel="canonical" href={canonicalUrl} />
+		<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+		<title>{content.headline[0]} {content.headline[1]} · {ui.brandName}</title>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={ui.brandName} />
+		<meta property="og:title" content={`${content.headline[0]} ${content.headline[1]}`} />
+		<meta property="og:description" content={content.intro} />
+		<meta property="og:url" content={canonicalUrl} />
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:title" content={`${content.headline[0]} ${content.headline[1]}`} />
+		<meta name="twitter:description" content={content.intro} />
+	</head>
+	<body class="landing-page">
+		<a class="skip-link" href="#main-content">{ui.skipLink}</a>
+
+		<header class="site-header">
+			<div class="site-header__inner">
+				<a class="wordmark" href={localizeHref('/')} aria-label={ui.homeAriaLabel}>
+					<img class="wordmark__mark" src="/logo.svg" width="36" height="36" alt="" aria-hidden="true" />
+					<span class="wordmark__name">{ui.brandName}</span>
+				</a>
+				<nav class="site-nav" aria-label={ui.primaryNavigationLabel}>
+					<a href={localizeHref('/docs/')}>{ui.navigation.docs}</a>
+					<a href={localizeHref('/getting-started/')}>{ui.navigation.build}</a>
+					<a href={localizeHref('/start/fit-and-tradeoffs/')}>{ui.navigation.fitAndTradeoffs}</a>
+					<a href={githubUrl} target="_blank" rel="noreferrer">{ui.navigation.github}</a>
+				</nav>
+				<div class="site-header__tools">
+					<details class="language-selector">
+						<summary class="language-selector__summary" aria-label={`${ui.languageSelector.menuLabel}: ${ui.languageSelector.options[locale]}`}>
+							<span class="language-selector__label">{ui.languageSelector.label}</span>
+							<span class="language-selector__current">{ui.languageSelector.options[locale]}</span>
+						</summary>
+						<nav class="language-selector__menu" aria-label={ui.languageSelector.menuLabel}>
+							{landingRouteLocales.map((languageLocale) => (
+								<a
+									href={languageHref(languageLocale)}
+									aria-current={languageLocale === locale ? 'page' : undefined}
+								>
+									{ui.languageSelector.options[languageLocale]}
+								</a>
+							))}
+						</nav>
+					</details>
+					<a class="button button--small button--ink site-header__cta" href={localizeHref('/getting-started/')}>
+						{ui.cta.headerCreateProject}
+					</a>
+				</div>
+			</div>
+		</header>
+
+		<main id="main-content">
+			<section class="hero" aria-labelledby="hero-title">
+				<div class="page-shell hero__inner">
+					<div class="hero__copy">
+						<h1 id="hero-title" class="hero__title">
+							<span>{content.headline[0]}</span>
+							<span class="hero__title-accent">{content.headline[1]}</span>
+						</h1>
+						<p class="hero__intro">{content.intro}</p>
+						<div class="hero__actions">
+							<a class="button button--accent" href={localizeHref(content.primaryCta.href)}>{ui.cta.heroPrimary}</a>
+							<a class="text-link" href={localizeHref(content.secondaryCta.href)}>{ui.cta.heroSecondary}</a>
+						</div>
+					</div>
+
+					<figure class="ide-figure hero__visual">
+						<div class="ide-figure__media">
+							<img src={ideImage} width="1023" height="768" loading="eager" decoding="async" alt={ui.image.alt} />
+							<button class="ide-figure__zoom-trigger" type="button" popovertarget="ide-dialog" aria-haspopup="dialog" aria-controls="ide-dialog">
+								{ui.image.viewLarger}
+							</button>
+						</div>
+						<figcaption>{ui.image.caption}</figcaption>
+						<a class="ide-figure__full-link" href={ideImage} target="_blank" rel="noreferrer" aria-label={ui.image.fullResolutionAriaLabel}>{ui.image.fullResolution}</a>
+					</figure>
+				</div>
+			</section>
+
+			<section class="outcome-section outcome-section--dark auditability-section" id="history" aria-labelledby="auditability-title">
+				<div class="page-shell section-shell outcome-layout">
+					<div class="outcome-copy">
+						<h2 id="auditability-title">{content.auditability.title}</h2>
+					</div>
+					<div class="outcome-copy__detail">
+						<p>{content.auditability.body}</p>
+						<a class="button button--paper" href={localizeHref(content.auditability.cta.href)}>{ui.cta.auditability}</a>
+						<figure class="auditability-proof">
+							<figcaption>{proof.caption}</figcaption>
+							<div class="auditability-proof__records">
+								<div class="auditability-proof__record"><span>{proof.accountOpened}</span><strong>{proof.accountOpenedAmount}</strong></div>
+								<div class="auditability-proof__record"><span>{proof.cashWithdrawn}</span><strong>{proof.cashWithdrawnAmount}</strong></div>
+								<div class="auditability-proof__record auditability-proof__record--current"><span>{proof.currentBalance}</span><strong>{proof.currentBalanceAmount}</strong></div>
+							</div>
+							<p>{proof.currentStateDescription}</p>
+						</figure>
+					</div>
+				</div>
+			</section>
+
+			<section class="outcome-section communication-section" id="communication" aria-labelledby="communication-title">
+				<div class="page-shell section-shell outcome-layout">
+					<div class="outcome-copy">
+						<h2 id="communication-title">{content.communication.title}</h2>
+					</div>
+					<div class="outcome-copy__detail">
+						<p>{content.communication.body}</p>
+						<a class="button button--ink" href={localizeHref(content.communication.cta.href)}>{ui.cta.communication}</a>
+						<ul class="term-row" aria-label={ui.sharedModelTermsLabel}>
+							{ui.sharedModelTerms.map((term) => <li>{term}</li>)}
+						</ul>
+					</div>
+				</div>
+			</section>
+
+			<section class="outcome-section outcome-section--violet design-section" id="design" aria-labelledby="design-title">
+				<div class="page-shell section-shell outcome-layout">
+					<div class="outcome-copy">
+						<h2 id="design-title">{content.design.title}</h2>
+					</div>
+					<div class="outcome-copy__detail">
+						<p>{content.design.body}</p>
+						<a class="button button--ink" href={localizeHref(content.design.cta.href)}>{ui.cta.design}</a>
+						<dl class="decision-list">
+							{ui.decisionItems.map((item) => (
+								<div>
+									<dt>{item.label}</dt>
+									<dd>{item.value}</dd>
+								</div>
+							))}
+						</dl>
+					</div>
+				</div>
+			</section>
+
+			<section class="outcome-section safe-change-section" id="safe-change" aria-labelledby="safe-change-title">
+				<div class="page-shell section-shell outcome-layout">
+					<div class="outcome-copy">
+						<h2 id="safe-change-title">{content.safeChange.title}</h2>
+					</div>
+					<div class="outcome-copy__detail">
+						<p>{content.safeChange.body}</p>
+						<a class="button button--accent" href={localizeHref(content.safeChange.cta.href)}>{ui.cta.safeChange}</a>
+						<ul class="check-list" aria-label={ui.checkListLabel}>
+							{ui.checkList.map((item) => <li>{item}</li>)}
+						</ul>
+					</div>
+				</div>
+			</section>
+
+			<section class="closing-section" aria-labelledby="closing-title">
+				<div class="page-shell section-shell closing-section__inner">
+					<div class="closing-section__copy">
+						<h2 id="closing-title">{content.closing.title}</h2>
+						<p>{content.closing.body}</p>
+						<div class="closing-section__actions">
+							<a class="button button--paper" href={localizeHref(content.closing.primaryCta.href)}>{ui.cta.closingPrimary}</a>
+							<a class="button button--outline-light" href={localizeHref(content.closing.secondaryCta.href)}>{ui.cta.closingSecondary}</a>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<div popover="auto" role="dialog" class="ide-dialog" id="ide-dialog" aria-labelledby="ide-dialog-title" aria-describedby="ide-dialog-description">
+			<div class="ide-dialog__surface">
+				<div class="ide-dialog__head">
+					<p id="ide-dialog-title">{ui.dialog.title}</p>
+					<button class="ide-dialog__close" type="button" popovertarget="ide-dialog" popovertargetaction="hide" aria-label={ui.dialog.closeAriaLabel}>{ui.dialog.close}</button>
+				</div>
+				<div class="ide-dialog__media">
+					<img src={ideImage} width="1023" height="768" loading="lazy" decoding="async" alt={ui.image.alt} />
+				</div>
+				<p id="ide-dialog-description">{ui.dialog.description}</p>
+				<a class="ide-dialog__full-link" href={ideImage} target="_blank" rel="noreferrer">{ui.image.fullResolution}</a>
+			</div>
+		</div>
+
+		<script>
+			const ideDialog = document.querySelector('#ide-dialog');
+			const ideZoomTrigger = document.querySelector<HTMLButtonElement>('.ide-figure__zoom-trigger');
+			const ideDialogClose = document.querySelector<HTMLButtonElement>('.ide-dialog__close');
+
+			ideDialog?.addEventListener('toggle', () => {
+				if (ideDialog.matches(':popover-open')) {
+					requestAnimationFrame(() => ideDialogClose?.focus());
+				} else {
+					ideZoomTrigger?.focus();
+				}
+			});
+		</script>
+
+		<footer class="site-footer">
+			<div class="page-shell site-footer__inner">
+				<a class="wordmark wordmark--footer" href={localizeHref('/')} aria-label={ui.homeAriaLabel}>
+					<img class="wordmark__mark" src="/logo.svg" width="36" height="36" alt="" aria-hidden="true" />
+					<span class="wordmark__name">{ui.brandName}</span>
+				</a>
+				<nav aria-label={ui.footerNavigationLabel}>
+					<a href={localizeHref('/docs/')}>{ui.footer.docs}</a>
+					<a href={localizeHref('/getting-started/')}>{ui.footer.build}</a>
+					<a href={localizeHref('/start/fit-and-tradeoffs/')}>{ui.footer.fitAndTradeoffs}</a>
+					<a href={localizeHref('/operate/contributing/')}>{ui.footer.contribute}</a>
+					<a href={githubUrl} target="_blank" rel="noreferrer">{ui.footer.github}</a>
+					<a href={discordUrl} target="_blank" rel="noreferrer">{ui.footer.discord}</a>
+				</nav>
+			</div>
+		</footer>
+	</body>
+</html>

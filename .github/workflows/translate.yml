@@ -1,0 +1,168 @@
+# Continuous documentation translation for the Starlight docs site.
+#
+# NOTE: Auto-commits from this workflow trigger all push-to-main workflows (known consequence of monorepo)
+# NOTE: GROQ_API_KEY must be added to this repo's GitHub Actions secrets
+#       (Settings → Secrets → Actions → New repository secret: GROQ_API_KEY)
+# NOTE: The checker owns the 49-page inventory plus the five TypeScript landing
+#       translations. The hand-maintained docs/index.mdx and each locale's
+#       index.mdx/docs/index.mdx are documentation landing pages outside the
+#       Markdown inventory. The tracked adrs/index.mdx is translated; generated
+#       adrs/*.md detail pages remain canonical English and are excluded.
+#       Landing data is maintained in src/data/landing-locales/ and is
+#       source-revision checked; the Starlight action translates documentation.
+name: Translate Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/docs/**'
+      - '!src/content/docs/es/**'
+      - '!src/content/docs/fr/**'
+      - '!src/content/docs/hy/**'
+      - '!src/content/docs/ja/**'
+      - '!src/content/docs/ru/**'
+      - '!src/content/docs/adrs/*.md'
+      - '!src/content/docs/docs/index.mdx'
+      - 'src/data/landing.ts'
+      - 'src/data/landing-locales/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .genaiscript/cache/**
+          key: continuous-translation-${{ github.run_id }}
+          restore-keys: |
+            continuous-translation-
+
+      - uses: pelikhan/action-continuous-translation@923d1c9a88c47993a6d10c509c810f853c9205e6 # v0
+        with:
+          openai_api_key: ${{ secrets.GROQ_API_KEY }}
+          openai_api_base: https://api.groq.com/openai/v1
+          model_alias: "translation: openai:llama-3.3-70b-versatile"
+          lang: es,ru,fr,ja
+          source: en
+          starlight_dir: .
+          instructions: |
+            Translate human-readable prose, headings, titles, and descriptions only.
+            Preserve frontmatter delimiters and keys, Markdown/MDX structure,
+            internal link destinations and URL fragments (only the action's
+            required Starlight locale-path adjustment is allowed), code fences
+            and code spans, imports, JSX/HTML component tags and attributes, and
+            all URLs exactly as-is. Output only the translated document.
+          # Armenian is handled below because this action does not support it.
+          # All nested Markdown/MDX pages are covered; only generated ADR
+          # details and hand-maintained landing pages are excluded.
+          files: >-
+            src/content/docs/**/*.md;
+            src/content/docs/**/*.mdx;
+            !src/content/docs/es/**;
+            !src/content/docs/fr/**;
+            !src/content/docs/hy/**;
+            !src/content/docs/ja/**;
+            !src/content/docs/ru/**;
+            !src/content/docs/adrs/*.md;
+            !src/content/docs/docs/index.mdx
+
+      - name: Translate to Armenian (unsupported by GenAIScript)
+        working-directory: .
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          docs_root="src/content/docs"
+          while IFS= read -r file; do
+            # Skip files already in locale directories, the hand-maintained
+            # docs landing page, and generated English ADR detail pages.
+            rel="${file#${docs_root}/}"
+            first_dir="${rel%%/*}"
+            case "$first_dir" in es|ru|hy|fr|ja) continue ;; esac
+            [ "$rel" = "docs/index.mdx" ] && continue
+            case "$rel" in adrs/*.md) continue ;; esac
+
+            target_dir="${docs_root}/hy/$(dirname "$rel")"
+            target_file="${target_dir}/$(basename "$file")"
+            [ "$target_dir" = "${docs_root}/hy/." ] && target_dir="${docs_root}/hy" && target_file="${target_dir}/$(basename "$file")"
+            mkdir -p "$target_dir"
+
+            echo "Translating $file to Armenian..."
+            content=$(cat "$file")
+            response=$(curl --fail --silent --show-error https://api.groq.com/openai/v1/chat/completions \
+              -H "Authorization: Bearer $GROQ_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n --arg content "$content" '{
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                  {role: "system", content: "You are an expert translator. Translate the following Markdown or MDX documentation file to Armenian (Հայերեն). Preserve the complete document structure: frontmatter delimiters and keys, Markdown headings/lists/tables, internal link destinations and URL fragments, code fences and code spans, imports, JSX/HTML component tags and attributes, and all other MDX syntax exactly as-is. Translate human-readable prose, headings, titles, and descriptions only. Output ONLY the translated file, with no explanations or code fences around it."},
+                  {role: "user", content: $content}
+                ],
+                temperature: 0.3,
+                max_tokens: 8192
+              }')")
+            translated=$(echo "$response" | jq -r '.choices[0].message.content // empty')
+            if [ -n "$translated" ]; then
+              printf '%s\n' "$translated" > "$target_file"
+              echo "Created: $target_file"
+            else
+              echo "Failed to translate $file"
+              echo "$response" | jq '.error' 2>/dev/null
+              exit 1
+            fi
+          done < <(find "$docs_root" -type f \( -name '*.md' -o -name '*.mdx' \) | sort)
+
+      - name: Reorganize translations to Starlight locale directories
+        working-directory: .
+        run: |
+          for lang in es ru hy fr ja; do
+            find src/content/docs -type f \( -name "*.${lang}.mdx" -o -name "*.${lang}.md" \) \
+              -not -path "src/content/docs/${lang}/*" \
+              -not -path "src/content/docs/adrs/*.md" | sort | while IFS= read -r file; do
+              ext="${file##*.}"
+              filename=$(basename "$file")
+              suffix=".${lang}.${ext}"
+              base="${filename%$suffix}"
+              dir=$(dirname "$file")
+              docs_root="src/content/docs"
+              rel_dir="${dir#${docs_root}}"
+              if [ -z "$rel_dir" ]; then
+                target_dir="${docs_root}/${lang}"
+              else
+                target_dir="${docs_root}/${lang}${rel_dir}"
+              fi
+              mkdir -p "$target_dir"
+              mv "$file" "${target_dir}/${base}.${ext}"
+              echo "Moved: $file -> ${target_dir}/${base}.${ext}"
+            done
+          done
+
+      - name: Test translation checker
+        working-directory: .
+        run: node scripts/check-translations.mjs --self-test
+
+      - name: Stamp English source revisions
+        working-directory: .
+        run: node scripts/check-translations.mjs --stamp --all
+
+      - name: Verify all locale inventories and source revisions
+        working-directory: .
+        run: node scripts/check-translations.mjs --check
+
+      - uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
+        with:
+          file_pattern: 'src/content/docs/** src/data/landing-locales/** translations/**'
+          commit_message: '[translation] auto-translate docs'
+          commit_user_name: genaiscript

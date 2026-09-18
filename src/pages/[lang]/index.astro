@@ -1,0 +1,28 @@
+---
+import LandingPage from '../../components/LandingPage.astro';
+import {
+	getLandingContent,
+	localizedLandingRouteLocales,
+	type LandingContent,
+	type LocalizedLandingLocale,
+} from '../../data/landing';
+
+export function getStaticPaths() {
+	return localizedLandingRouteLocales.map((locale) => ({
+		params: { lang: locale },
+		props: {
+			content: getLandingContent(locale),
+			locale,
+		},
+	}));
+}
+
+type Props = {
+	content: LandingContent;
+	locale: LocalizedLandingLocale;
+};
+
+const { content, locale } = Astro.props;
+---
+
+<LandingPage content={content} locale={locale} />
